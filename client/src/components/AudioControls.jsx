@@ -6,7 +6,7 @@ import { useAudioFile } from '../hooks/useAudioFile'
 import { useRef } from 'react'
 
 export function AudioControls() {
-  const { source, setSource, isListening, wsStatus, connect, disconnect, sendReset, isProcessingFile } = useStore()
+  const { source, setSource, isListening, wsStatus, connect, sendReset, isProcessingFile } = useStore()
   const { start: startMic, stop: stopMic } = useMicrophone()
   const { transcribeFile } = useAudioFile()
   const fileRef = useRef(null)
@@ -30,11 +30,6 @@ export function AudioControls() {
 
     if (wsStatus !== 'ready') connect()
     await transcribeFile(file)
-  }
-
-  const handleConnect = () => {
-    if (wsStatus === 'disconnected' || wsStatus === 'error') connect()
-    else disconnect()
   }
 
   return (

@@ -1,0 +1,4 @@
+# Windows-only dependencies (system audio capture via WASAPI loopback)
+# Install these in addition to requirements.txt on Windows:
+#   pip install -r requirements-windows.txt
+PyAudioWPatch>=0.2.12.6

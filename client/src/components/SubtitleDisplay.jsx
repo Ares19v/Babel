@@ -5,7 +5,7 @@ import { useStore } from '../store/useStore'
 const MAX_VISIBLE = 5
 
 export function SubtitleDisplay() {
-  const { subtitles, currentSegment, detectedLanguage } = useStore()
+  const { subtitles } = useStore()
 
   const visible = subtitles.slice(-MAX_VISIBLE)
 

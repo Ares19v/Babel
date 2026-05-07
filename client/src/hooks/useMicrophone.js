@@ -2,10 +2,9 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useStore } from '../store/useStore'
 
 const SAMPLE_RATE = 16000
-const CHUNK_DURATION_MS = 100 // send audio every 100ms
 
 export function useMicrophone() {
-  const { sendAudio, isListening, setListening, wsStatus } = useStore()
+  const { sendAudio, setListening, wsStatus } = useStore()
   const streamRef = useRef(null)
   const processorRef = useRef(null)
   const ctxRef = useRef(null)
