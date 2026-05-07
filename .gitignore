@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Models, checkpoints & training artifacts
+server/models/
+training/checkpoints/
+training/logs/
+training/data/
+training/eval_results.json
+training/eval_checkpoint.json
+training/debug_eval.py
+training/label_check.txt
+
+# Environment secrets
+.env
+*.env
+!.env.example
+
+# Node
+client/node_modules/
+client/dist/
+client/.vite/
+
+# Audio/video temp files
+*.wav
+*.mp3
+*.mp4
+*.tmp
+*.babel.wav
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+.dockerignore
+
+# Coverage / test output
+htmlcov/
+.coverage
+*.lcov
+
+# Logs
+*.log

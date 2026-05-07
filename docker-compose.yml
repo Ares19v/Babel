@@ -1,0 +1,52 @@
+# Babel — Docker Compose
+# ─────────────────────────────────────────────────────────────────────────────
+# Usage:
+#   docker compose up --build        # start everything
+#   docker compose up --build -d     # start in background
+#   docker compose down              # stop and remove containers
+#
+# GPU Requirement: The backend requires an NVIDIA GPU with CUDA 12.8+
+# and the NVIDIA Container Toolkit (nvidia-docker2).
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: babel-backend:latest
+    container_name: babel-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - BABEL_MODEL_SIZE=${BABEL_MODEL_SIZE:-large-v3-turbo}
+      - BABEL_DEVICE=${BABEL_DEVICE:-cuda}
+      - BABEL_COMPUTE_TYPE=${BABEL_COMPUTE_TYPE:-float16}
+      - BABEL_CORS_ORIGINS=http://localhost,http://localhost:80
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: babel-frontend:latest
+    container_name: babel-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
