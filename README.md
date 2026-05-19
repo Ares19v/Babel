@@ -5,7 +5,7 @@
 ### Real-Time Multilingual Speech Transcription & Translation
 
 [![CI](https://github.com/Ares19v/Babel/actions/workflows/ci.yml/badge.svg)](https://github.com/Ares19v/Babel/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://python.org)
 [![Node](https://img.shields.io/badge/node-20-green.svg)](https://nodejs.org)
 
@@ -208,6 +208,7 @@ MODEL_SIZE = "large-v3-turbo"   # default — best speed+quality balance
 
 ---
 
-## License
-
-MIT © 2025 [Devansh Tyagi](https://github.com/Ares19v)
+---
+<p align="center">
+  Made by Devansh Tyagi @ 2026
+</p>
