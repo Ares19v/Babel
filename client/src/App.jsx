@@ -1,16 +1,47 @@
-import { useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { AudioControls } from './components/AudioControls'
-import { SubtitleDisplay } from './components/SubtitleDisplay'
-import { LanguageBadge } from './components/LanguageBadge'
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Mic,
+  MicOff,
+  Upload,
+  Radio,
+  Copy,
+  Check,
+  Download,
+  RotateCcw,
+  Sparkles,
+  Zap,
+  Volume2,
+  Cpu,
+  Globe,
+} from 'lucide-react'
+import { AuroraBackground } from './components/AuroraBackground'
 import { FileResults } from './components/FileResults'
 import { useStore } from './store/useStore'
+import { useMicrophone } from './hooks/useMicrophone'
+import { useAudioFile } from './hooks/useAudioFile'
+import { LANGUAGE_NAMES, LANGUAGE_FLAGS } from './utils/languages'
 
 export default function App() {
-  const { source } = useStore()
+  const {
+    source,
+    setSource,
+    isListening,
+    wsStatus,
+    connect,
+    sendReset,
+    isProcessingFile,
+    subtitles,
+    detectedLanguage,
+    latencyMs,
+  } = useStore()
 
-  // Connect once on mount. Retry every 3s by reading store state imperatively
-  // (NOT as a dependency — that caused an infinite reconnect loop)
+  const { start: startMic, stop: stopMic } = useMicrophone()
+  const { transcribeFile } = useAudioFile()
+  const fileRef = useRef(null)
+  const [copied, setCopied] = useState(false)
+
+  // Connect on mount
   useEffect(() => {
     const { connect } = useStore.getState()
     connect()
@@ -19,72 +50,272 @@ export default function App() {
       if (wsStatus === 'disconnected' || wsStatus === 'error') connect()
     }, 3000)
     return () => clearInterval(interval)
-  }, []) // empty — run exactly once on mount
+  }, [])
+
+  const handleMicToggle = async () => {
+    if (wsStatus === 'disconnected' || wsStatus === 'error') {
+      connect()
+      return
+    }
+    if (isListening) {
+      stopMic()
+    } else {
+      await startMic()
+    }
+  }
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    if (wsStatus !== 'ready') connect()
+    await transcribeFile(file)
+  }
+
+  const handleCopyTranscript = () => {
+    if (!subtitles.length) return
+    const fullText = subtitles.map((s) => s.text).join(' ')
+    navigator.clipboard.writeText(fullText)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleExportText = () => {
+    if (!subtitles.length) return
+    const fullText = subtitles.map((s) => `[${s.language || 'auto'}] ${s.text}`).join('\n')
+    const blob = new Blob([fullText], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `babel_translation_${Date.now()}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
-    <div className="app">
-      {/* Animated background orbs */}
-      <div className="bg-orb orb-1" />
-      <div className="bg-orb orb-2" />
-      <div className="bg-orb orb-3" />
+    <div className="babel-app-wrap">
+      {/* Aurora Borealis Background */}
+      <AuroraBackground />
 
-      {/* Header */}
-      <motion.header
-        className="header"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="logo">
-          <span className="logo-icon">⬡</span>
-          <span className="logo-text">Babel</span>
-          <span className="logo-sub">Real-Time Translation</span>
-        </div>
-        <LanguageBadge />
-      </motion.header>
+      {/* Unified Center Workstation */}
+      <div className="babel-card">
+        {/* Top Header */}
+        <header className="babel-header">
+          <div className="brand-badge">
+            <div className="brand-icon">
+              <Sparkles size={16} />
+            </div>
+            <div>
+              <span className="brand-title">BABEL</span>
+              <span className="brand-subtitle">AI SPEECH TRANSLATOR</span>
+            </div>
+          </div>
 
-      {/* Main content */}
-      <main className="main">
-        {/* Subtitle stage (only for live mic/system mode) */}
-        {(source === 'mic' || source === 'system') && (
-          <motion.div
-            className="card subtitle-card"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-          >
-            <SubtitleDisplay />
-          </motion.div>
-        )}
+          {/* Mode Switcher */}
+          <div className="nav-tabs">
+            <button
+              className={`nav-tab ${source === 'mic' ? 'active' : ''}`}
+              onClick={() => {
+                setSource('mic')
+                if (isListening) stopMic()
+              }}
+            >
+              <Mic size={14} />
+              <span>Live Microphone</span>
+            </button>
 
-        {/* File results */}
-        {source === 'file' && (
-          <motion.div
-            className="card file-card"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-          >
-            <FileResults />
-          </motion.div>
-        )}
+            <button
+              className={`nav-tab ${source === 'file' ? 'active' : ''}`}
+              onClick={() => {
+                setSource('file')
+                if (isListening) stopMic()
+              }}
+            >
+              <Upload size={14} />
+              <span>File Upload</span>
+            </button>
 
-        {/* Controls */}
-        <motion.div
-          className="card controls-card"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <AudioControls />
-        </motion.div>
-      </main>
+            <button
+              className={`nav-tab ${source === 'system' ? 'active' : ''}`}
+              onClick={() => {
+                setSource('system')
+                if (isListening) stopMic()
+              }}
+            >
+              <Radio size={14} />
+              <span>System Audio</span>
+            </button>
+          </div>
 
-      <footer className="footer">
-        <span>Powered by Whisper large-v3-turbo · LoRA fine-tuned on FLEURS hi_in</span>
-        <span className="footer-sep">·</span>
-        <span>RTX 5060 · CUDA fp16</span>
-      </footer>
+          {/* Status Badge */}
+          <div className="header-status">
+            {detectedLanguage && (
+              <div className="lang-detected-pill">
+                <span>{LANGUAGE_FLAGS[detectedLanguage] || '🌐'}</span>
+                <span>{LANGUAGE_NAMES[detectedLanguage] || detectedLanguage.toUpperCase()}</span>
+                <span className="arrow-en">➔ EN</span>
+              </div>
+            )}
+            <div className={`status-dot-pill ${wsStatus}`}>
+              <span className="status-indicator-dot" />
+              <span>{wsStatus === 'ready' ? 'Ready' : wsStatus}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Central Translation Canvas */}
+        <main className="babel-stage">
+          {source === 'file' ? (
+            <div className="file-view">
+              <FileResults />
+              {!isProcessingFile && (
+                <div className="upload-dropzone" onClick={() => fileRef.current?.click()}>
+                  <Upload size={32} color="#34d399" />
+                  <div className="upload-title">Drop or browse audio / video file</div>
+                  <div className="upload-sub">Supports MP3, MP4, WAV, MKV, M4A, WEBM</div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="live-view">
+              {/* Toolbar */}
+              <div className="stage-toolbar">
+                <div className="mic-status-label">
+                  <span className={`pulse-dot ${isListening ? 'active' : ''}`} />
+                  <span>
+                    {isListening
+                      ? 'Listening... Speak in Hindi or any language'
+                      : 'Standby · Click start below to translate speech into English'}
+                  </span>
+                </div>
+
+                <div className="stage-actions">
+                  {subtitles.length > 0 && (
+                    <>
+                      <button className="tool-btn" onClick={handleCopyTranscript} title="Copy to clipboard">
+                        {copied ? <Check size={13} color="#34d399" /> : <Copy size={13} />}
+                        <span>{copied ? 'Copied' : 'Copy'}</span>
+                      </button>
+
+                      <button className="tool-btn" onClick={handleExportText} title="Download .txt transcript">
+                        <Download size={13} />
+                        <span>Export</span>
+                      </button>
+                    </>
+                  )}
+
+                  <button className="tool-btn danger" onClick={sendReset} title="Clear history">
+                    <RotateCcw size={13} />
+                    <span>Clear</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Subtitles Display Feed */}
+              <div className="subtitles-feed">
+                <AnimatePresence initial={false}>
+                  {subtitles.map((entry, idx) => {
+                    const isLatest = idx === subtitles.length - 1
+                    return (
+                      <motion.div
+                        key={entry.id}
+                        className={`subtitle-row ${isLatest ? 'current' : 'past'}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: isLatest ? 1 : 0.45, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <span className="subtitle-english-text">{entry.text}</span>
+                      </motion.div>
+                    )
+                  })}
+                </AnimatePresence>
+
+                {subtitles.length === 0 && (
+                  <div className="empty-state">
+                    <Globe size={32} color="#34d399" style={{ opacity: 0.7 }} />
+                    <div className="empty-text">
+                      {isListening
+                        ? 'Listening for speech... Speak in Hindi or any language'
+                        : 'English subtitles will appear here as you speak'}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Subtle Audio Waveform Indicator */}
+              <div className="audio-visual-bar">
+                <div className="wave-bars-container">
+                  {Array.from({ length: 30 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`mini-bar ${isListening ? 'active' : ''}`}
+                      style={{ animationDelay: `${(i % 8) * 0.08}s` }}
+                    />
+                  ))}
+                </div>
+                <div className="tech-badge">
+                  <Volume2 size={12} color="#34d399" />
+                  <span>16kHz Mono PCM · VAD Gated</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Bottom Action Footer */}
+        <footer className="babel-footer">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="audio/*,video/*"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
+
+          <div className="footer-left">
+            <Cpu size={14} color="#34d399" />
+            <span>NVIDIA RTX 5060 · Whisper Large-v3-Turbo</span>
+          </div>
+
+          <div className="footer-center">
+            {source === 'mic' && (
+              <button
+                className={`main-action-btn ${isListening ? 'stop' : 'start'}`}
+                onClick={handleMicToggle}
+                disabled={wsStatus === 'connecting'}
+              >
+                {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                <span>{isListening ? 'Stop Listening' : 'Start Live Translation'}</span>
+              </button>
+            )}
+
+            {source === 'file' && (
+              <button
+                className="main-action-btn start"
+                onClick={() => fileRef.current?.click()}
+                disabled={isProcessingFile}
+              >
+                <Upload size={18} />
+                <span>{isProcessingFile ? 'Translating File...' : 'Choose File'}</span>
+              </button>
+            )}
+
+            {source === 'system' && (
+              <div className="system-pill">
+                <Radio size={14} color="#38bdf8" />
+                <span>WASAPI System Audio Capture Active</span>
+              </div>
+            )}
+          </div>
+
+          <div className="footer-right">
+            <Zap size={14} color="#38bdf8" />
+            <span>{latencyMs !== null ? `${latencyMs}ms latency` : 'CUDA FP16'}</span>
+          </div>
+        </footer>
+      </div>
     </div>
   )
 }

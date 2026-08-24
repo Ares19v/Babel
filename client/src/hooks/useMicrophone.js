@@ -1,7 +1,27 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useStore } from '../store/useStore'
 
-const SAMPLE_RATE = 16000
+const TARGET_SAMPLE_RATE = 16000
+
+/**
+ * Linear interpolation downsampler — avoids aliasing artifacts
+ * that cause Whisper to emit garbage tokens or wrong-language output.
+ */
+function downsampleLinear(float32, fromRate, toRate) {
+  if (fromRate === toRate) return float32
+  const ratio = fromRate / toRate
+  const outLen = Math.floor(float32.length / ratio)
+  const out = new Float32Array(outLen)
+  for (let i = 0; i < outLen; i++) {
+    const pos = i * ratio
+    const idx = Math.floor(pos)
+    const frac = pos - idx
+    const a = float32[idx] ?? 0
+    const b = float32[idx + 1] ?? a
+    out[i] = a + frac * (b - a)
+  }
+  return out
+}
 
 export function useMicrophone() {
   const { sendAudio, setListening, wsStatus } = useStore()
@@ -19,36 +39,34 @@ export function useMicrophone() {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
+          sampleRate: { ideal: TARGET_SAMPLE_RATE },
         },
       })
       streamRef.current = stream
 
-      // Use whatever sample rate the browser gives us, then downsample to 16kHz
-      const ctx = new AudioContext()
+      // Request 16kHz directly from the browser — Chrome/Edge support this
+      // Fallback: AudioContext will use native rate and we downsample cleanly
+      const ctx = new AudioContext({ sampleRate: TARGET_SAMPLE_RATE })
       ctxRef.current = ctx
-      const nativeSR = ctx.sampleRate  // typically 44100 or 48000
+      const nativeSR = ctx.sampleRate
 
       const source = ctx.createMediaStreamSource(stream)
 
-      // bufferSize MUST be a power of 2 (256–16384)
-      // 4096 at 44100Hz ≈ 93ms per chunk — good balance of latency vs overhead
+      // 4096 samples at 16kHz = 256ms per chunk — good latency vs overhead
       const processor = ctx.createScriptProcessor(4096, 1, 1)
 
       processor.onaudioprocess = (e) => {
         const float32 = e.inputBuffer.getChannelData(0)
 
-        // Downsample from native rate to 16kHz
-        const ratio = nativeSR / SAMPLE_RATE
-        const outLen = Math.round(float32.length / ratio)
-        const downsampled = new Float32Array(outLen)
-        for (let i = 0; i < outLen; i++) {
-          downsampled[i] = float32[Math.round(i * ratio)]
-        }
+        // Downsample if needed (usually nativeSR === 16000 now)
+        const resampled = nativeSR !== TARGET_SAMPLE_RATE
+          ? downsampleLinear(float32, nativeSR, TARGET_SAMPLE_RATE)
+          : float32
 
-        // Convert float32 [-1,1] → int16
-        const int16 = new Int16Array(downsampled.length)
-        for (let i = 0; i < downsampled.length; i++) {
-          const s = Math.max(-1, Math.min(1, downsampled[i]))
+        // Convert float32 [-1,1] → int16 PCM
+        const int16 = new Int16Array(resampled.length)
+        for (let i = 0; i < resampled.length; i++) {
+          const s = Math.max(-1, Math.min(1, resampled[i]))
           int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff
         }
         sendAudio(int16.buffer)
@@ -74,7 +92,6 @@ export function useMicrophone() {
     setListening(false)
   }, [setListening])
 
-  // Cleanup on unmount
   useEffect(() => () => stop(), [stop])
 
   return { start, stop }

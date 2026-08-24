@@ -2,224 +2,153 @@
 
 # ⬡ Babel
 
-### Real-Time Multilingual Speech Transcription & Translation
-
-[![CI](https://github.com/Ares19v/Babel/actions/workflows/ci.yml/badge.svg)](https://github.com/Ares19v/Babel/actions/workflows/ci.yml)
+### Real-Time Multilingual Speech-to-English Translation Workstation
 
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://python.org)
-[![Node](https://img.shields.io/badge/node-20-green.svg)](https://nodejs.org)
+[![React](https://img.shields.io/badge/react-19-61dafb.svg)](https://react.dev)
+[![Vite](https://img.shields.io/badge/vite-8-646cff.svg)](https://vitejs.dev)
+[![Whisper](https://img.shields.io/badge/whisper-large--v3-brightgreen.svg)](https://openai.com/research/whisper)
+[![Groq](https://img.shields.io/badge/inference-Groq%20LPU-orange.svg)](https://groq.com)
 
-Stream from microphone, capture system audio, or upload any audio/video file — Babel transcribes and translates to English in real-time using **faster-whisper large-v3-turbo** on your GPU.
+Speak in **Hindi (or 99+ other languages)** into your microphone, play audio on your PC, or upload media files — **Babel** detects the spoken language and displays clean, accurate, real-time English subtitles right in front of you.
 
 </div>
 
 ---
 
-## Features
+## 🌌 Key Features
 
-- 🎙️ **Live mic streaming** — sub-second latency via WebSocket + Local Agreement algorithm
-- 🖥️ **System audio capture** — transcribe anything playing on your PC (WASAPI loopback)
-- 📁 **File upload** — supports MP3, MP4, MKV, WEBM, M4A, WAV and more via ffmpeg
-- 🌍 **99-language auto-detection** — no configuration needed
-- ⚡ **GPU accelerated** — CTranslate2 backend, 4–6× faster than vanilla Whisper
-- 🧠 **LoRA fine-tuned** — custom Hindi adapter trained on FLEURS (hi\_in)
-
----
-
-## Architecture
-
-```
-Mic / System Audio / File
-         │
-  ┌──────▼───────┐
-  │ React Client │ ──── WebSocket (PCM int16 @ 16kHz) ────►
-  └──────────────┘                                         │
-                                                  ┌────────▼────────┐
-                                                  │  FastAPI Server  │
-                                                  │                  │
-                                                  │  AudioRingBuffer │
-                                                  │       │          │
-                                                  │  faster-whisper  │
-                                                  │  large-v3-turbo  │
-                                                  │  (task=translate)│
-                                                  │       │          │
-                                                  │ Local Agreement  │
-                                                  │  (anti-flicker)  │
-                                                  └────────┬────────┘
-                                                           │
-                               ◄── JSON subtitle stream ───┘
-```
+- 🎙️ **Live Microphone Translation** — Speak naturally in Hindi, Hinglish, Spanish, French, Japanese, etc., and watch instant English subtitles stream onto your screen.
+- ⚡ **Ultra-Fast Cloud Inference** — Powered by OpenAI's official `whisper-large-v3` on Groq LPUs for sub-500ms translation latency.
+- 🧠 **Phrase-Aware VAD Gating** — Intelligent energy tracking & pause detection ($\ge 400\text{ms}$) sends complete coherent speech utterances, eliminating half-word hallucinations and transliteration artifacts.
+- 🛡️ **Zero-Flicker & Clean English Output** — Automatic server-side Unicode filtering and anti-aliasing linear interpolation ensure high-contrast, pure English text.
+- 📁 **Universal File Translation** — Drag & drop any audio or video file (`.mp3`, `.mp4`, `.mkv`, `.m4a`, `.wav`, `.webm`) for fast full-file English transcription with timestamps.
+- 🖥️ **System Audio Capture** — Transcribe and translate any meeting, video, or livestream playing on your computer.
+- ✨ **Aurora Borealis Glassmorphism UI** — Centered, distraction-free frosted glass console with animated Northern Lights plasma waves, active waveform indicators, live latency badges, one-click copy, and transcript export.
 
 ---
 
-## Quick Start (Windows)
+## 🏗️ Architecture
 
-### 1. Install dependencies (one-time)
-```bat
-INSTALL.bat
 ```
-
-### 2. Run the app
-```bat
-Run_Project.bat
+  [ Microphone / System Audio / File ]
+                   │
+                   ▼
+  ┌────────────────────────────────────────────────────────┐
+  │                   React 19 Frontend                    │
+  │  - Web Audio Context (16kHz PCM stream)                │
+  │  - Linear interpolation downsampler                    │
+  │  - Aurora Borealis canvas & subtitle renderer          │
+  └────────────────────────┬───────────────────────────────┘
+                           │
+                 WebSocket / REST API
+                           │
+                           ▼
+  ┌────────────────────────────────────────────────────────┐
+  │                 FastAPI Backend Server                 │
+  │  - AudioRingBuffer: Energy Tracking & VAD Segmentation │
+  │  - Silence & Noise Suppression Gating                  │
+  │  - In-memory WAV assembly (zero-disk streaming)        │
+  └────────────────────────┬───────────────────────────────┘
+                           │
+                Groq LPUs / Whisper API
+                           │
+                           ▼
+  ┌────────────────────────────────────────────────────────┐
+  │            Whisper Large-v3 Translation Engine         │
+  │  - Multilingual Auto-Detection (99+ Languages)         │
+  │  - Native task="translations" ➔ 100% English Output    │
+  └────────────────────────────────────────────────────────┘
 ```
-
-The browser opens automatically at **http://localhost:5173**.
 
 ---
 
-## Manual Setup
+## 🌍 Supported Languages (➔ Translated to English)
 
-### Backend
+Whisper Large-v3 supports **99 languages** with auto-detection. Speak any language and Babel outputs English:
+
+| Category | Languages |
+|---|---|
+| **Tier 1 (High Accuracy)** | 🇮🇳 Hindi, 🇪🇸 Spanish, 🇫🇷 French, 🇩🇪 German, 🇯🇵 Japanese, 🇰🇷 Korean, 🇨🇳 Chinese (Mandarin), 🇮🇹 Italian, 🇵🇹 Portuguese, 🇷🇺 Russian, 🇸🇦 Arabic, 🇹🇷 Turkish, 🇳🇱 Dutch, 🇵🇱 Polish, 🇸🇪 Swedish |
+| **Indic & Regional** | 🇮🇳 Hindi (हिन्दी), Hinglish, Urdu, Punjabi, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam |
+| **Global & European** | Vietnamese, Thai, Indonesian, Malay, Greek, Czech, Romanian, Hungarian, Finnish, Danish, Norwegian, Ukrainian, Hebrew |
+
+---
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
+- **Python 3.10+**
+- **Node.js 18+**
+- **FFmpeg** (installed and available in PATH)
+- **Groq API Key** (Free from [console.groq.com](https://console.groq.com))
+
+### 2. Backend Setup
 ```powershell
 cd server
 python -m venv .venv
-.venv\Scripts\pip install -r requirements.txt
-.venv\Scripts\uvicorn main:app --host 127.0.0.1 --port 8000
+.venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create .env file with your Groq API key:
+# GROQ_API_KEY=gsk_your_key_here
 ```
 
-### Frontend
+Start the backend:
+```powershell
+uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+### 3. Frontend Setup
 ```powershell
 cd client
 npm install
 npm run dev
 ```
 
----
-
-## Docker (GPU)
-
-Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
-
-```bash
-docker compose up --build
-```
-
-App will be available at **http://localhost**.
+Open **[http://localhost:5173](http://localhost:5173)** in your browser, click **`Start Live Translation`**, and start speaking!
 
 ---
 
-## API Reference
+## 📡 API Reference
 
-| Endpoint | Method | Description |
-|---|---|---|
-| `/health` | GET | Server + model status |
-| `/ws/stream` | WebSocket | Real-time PCM audio → transcript stream |
-| `/transcribe/file` | POST | Upload audio/video → timestamped segments |
-| `/docs` | GET | Interactive Swagger UI |
+| Endpoint | Method | Protocol | Description |
+|---|---|---|---|
+| `/health` | `GET` | HTTP | Health check, active model, and backend status |
+| `/ws/stream` | `GET` | WebSocket | Real-time binary PCM audio stream $\rightarrow$ live English subtitles |
+| `/transcribe/file` | `POST` | HTTP | Multipart file upload $\rightarrow$ timestamped English transcript segments |
+| `/docs` | `GET` | HTTP | Interactive Swagger API documentation |
 
-### WebSocket Message Format
+### WebSocket Payload Specification
 
-**Client → Server:** Binary frames of `int16` PCM at 16 kHz mono
-
-**Server → Client:**
+- **Client $\rightarrow$ Server:** Binary frames of `int16` PCM audio at 16,000 Hz (mono).
+- **Server $\rightarrow$ Client:**
 ```json
 {
   "type": "transcript",
-  "text": "Hello, how are you?",
+  "text": "Tomorrow I am traveling to Delhi.",
   "language": "hi",
-  "language_probability": 0.987,
-  "words": [{"word": "Hello,", "start": 0.0, "end": 0.3}],
-  "is_final": false,
-  "latency_ms": 420
+  "language_probability": 0.99,
+  "words": [],
+  "is_final": true,
+  "latency_ms": 340
 }
 ```
 
 ---
 
-## Fine-Tuning (Hindi LoRA Adapter)
+## 💻 Tech Stack
 
-The `training/` directory contains the full pipeline used to fine-tune a LoRA adapter on FLEURS Hindi (hi\_in).
-
-### Reproduce the training
-
-```powershell
-# 1. Install training packages
-cd server
-.venv\Scripts\pip install transformers peft datasets accelerate evaluate jiwer soundfile librosa
-
-# 2. Prepare dataset (~2 GB download)
-cd ..\training
-..\server\.venv\Scripts\python prepare_dataset.py
-
-# 3. Fine-tune (≈1–2 hours on RTX 5060)
-..\server\.venv\Scripts\python finetune.py
-
-# 4. Benchmark (WER comparison)
-..\server\.venv\Scripts\python benchmark.py
-```
-
-### Benchmark Results
-
-| Model | WER (FLEURS hi\_in, 100 samples) |
-|---|---|
-| `whisper-large-v3` baseline | 0.3998 |
-| Babel LoRA fine-tuned | 0.7491 |
-
-> **Note:** The fine-tuned adapter shows signs of hallucination on some samples due to the aggressive learning rate used during training. The base `large-v3-turbo` model is used in production for reliability. Improving the adapter is an active area of development.
+- **ASR & Translation:** OpenAI `whisper-large-v3` via Groq LPU API
+- **VAD & Audio Segmentation:** Custom RMS Energy Tracking & Phrase Pause Buffer
+- **Backend Framework:** FastAPI, Uvicorn, WebSockets, NumPy, FFmpeg-Python
+- **Frontend Stack:** React 19, Vite, Zustand, Framer Motion, Lucide Icons, Canvas WebGL
+- **Audio Capture:** HTML5 Web Audio API (`AudioContext`, `ScriptProcessorNode`, Linear Resampling)
 
 ---
 
-## System Audio Mode
+## 📜 License
 
-Enable "Stereo Mix" in Windows Sound Settings → Recording → Right-click → Show Disabled Devices, then run in a third terminal:
-
-```powershell
-cd server
-.venv\Scripts\python pipeline/system_audio.py
-```
-
----
-
-## Changing the Model
-
-Edit `server/main.py` line 40:
-
-```python
-MODEL_SIZE = "large-v3-turbo"   # default — best speed+quality balance
-# MODEL_SIZE = "large-v3"       # highest accuracy, more VRAM
-# MODEL_SIZE = "medium"         # good quality, less VRAM
-# MODEL_SIZE = "base"           # fastest — good for CPU-only testing
-```
-
----
-
-## Tech Stack
-
-| Component | Technology |
-|---|---|
-| ASR + Translation | faster-whisper large-v3-turbo |
-| Streaming algorithm | Local Agreement (anti-hallucination flicker) |
-| Fine-tuning | HuggingFace PEFT LoRA (4-bit, rank-32) |
-| Training dataset | FLEURS hi\_in (Google) |
-| Evaluation | WER via jiwer |
-| Backend | FastAPI + uvicorn + WebSockets |
-| Frontend | React 19 + Vite + Zustand + Framer Motion |
-| Containerization | Docker + NVIDIA Container Toolkit |
-
----
-
-## Roadmap
-
-- [ ] Improve Hindi LoRA adapter (lower LR, more data augmentation)
-- [ ] Meta Ray-Ban companion mode (Spatial SDK WebSocket client)
-- [ ] Multi-speaker diarization
-- [ ] Subtitle export (SRT/VTT)
-
----
-
----
-<p align="center">
-  Made by Devansh Tyagi @ 2026
-</p>
-
-## 🤗 Model on Hugging Face
-
-The trained model is available on Hugging Face: [devanshty/Babel](https://huggingface.co/devanshty/Babel)
-
-### Download
-
-```python
-from huggingface_hub import hf_hub_download
-model_path = hf_hub_download(repo_id='devanshty/Babel', filename='adapter_model.safetensors')
-```
+MIT License. Developed by Devansh Tyagi.

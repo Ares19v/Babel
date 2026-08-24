@@ -58,13 +58,13 @@ _CORS_ORIGINS = [
 # ── App lifecycle ──────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info(f"⚡ Loading whisper/{MODEL_SIZE} on {DEVICE} [{COMPUTE_TYPE}]...")
+    logger.info(f"⚡ Initializing Groq Whisper API (whisper-large-v3-turbo)...")
     app.state.transcriber = StreamingTranscriber(
         model_size=MODEL_SIZE,
         device=DEVICE,
         compute_type=COMPUTE_TYPE,
     )
-    logger.info("✅ Babel server ready")
+    logger.info("✅ Babel server ready — using Groq Whisper for English translation")
     yield
     logger.info("👋 Shutting down")
 
@@ -85,9 +85,9 @@ app.add_middleware(
 async def health():
     return {
         "status": "ok",
-        "model": MODEL_SIZE,
-        "device": DEVICE,
-        "compute_type": COMPUTE_TYPE,
+        "model": "whisper-large-v3-turbo",
+        "backend": "groq-api",
+        "task": "translations → English",
     }
 
 
@@ -144,6 +144,12 @@ async def websocket_stream(ws: WebSocket):
                         transcriber.reset()
                         await ws.send_json({"type": "status", "status": "ready"})
                         logger.info("Session reset")
+
+                    elif mtype == "set_language":
+                        lang = data.get("language")
+                        transcriber.set_forced_language(lang)
+                        await ws.send_json({"type": "status", "status": "language_updated", "language": lang})
+                        logger.info(f"Language updated to: {lang}")
 
                     elif mtype == "set_model":
                         # Future: hot-swap model size
