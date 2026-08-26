@@ -15,7 +15,9 @@ if errorlevel 1 (
 )
 
 echo  [1/2] Starting Babel server on http://localhost:8000 ...
-start "Babel Server" cmd /k "cd /d %~dp0server && .venv\Scripts\uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+set "UVICORN_EXE=python -m uvicorn"
+if exist "%~dp0server\.venv\Scripts\uvicorn.exe" set "UVICORN_EXE=%~dp0server\.venv\Scripts\uvicorn.exe"
+start "Babel Server" cmd /k "cd /d %~dp0server && %UVICORN_EXE% main:app --host 0.0.0.0 --port 8000 --reload"
 
 timeout /t 3 /nobreak >nul
 

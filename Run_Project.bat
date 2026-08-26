@@ -17,12 +17,11 @@ set "CLIENT=%ROOT%client"
 set "VENV=%SERVER%\.venv"
 
 :: ── Dependency checks ─────────────────────────────────────────────────────────
-if not exist "%VENV%\Scripts\uvicorn.exe" (
-    echo  [ERROR] Python environment not set up.
-    echo          Please run INSTALL.bat first.
-    echo.
-    pause
-    exit /b 1
+set USE_VENV=0
+set "UVICORN_CMD=python -m uvicorn"
+if exist "%VENV%\Scripts\activate.bat" (
+    set USE_VENV=1
+    set "UVICORN_CMD=.venv\Scripts\uvicorn"
 )
 
 if not exist "%CLIENT%\node_modules" (
@@ -42,7 +41,7 @@ if errorlevel 1 (
 
 :: ── Start Backend ─────────────────────────────────────────────────────────────
 echo  [1/2] Starting Babel backend on http://localhost:8000...
-start "Babel — Backend" cmd /k "title Babel Backend && cd /d "%SERVER%" && .venv\Scripts\uvicorn main:app --host 127.0.0.1 --port 8000"
+start "Babel — Backend" cmd /k "title Babel Backend && cd /d "%SERVER%" && %UVICORN_CMD% main:app --host 127.0.0.1 --port 8000"
 
 :: Wait for backend to be ready (poll health endpoint)
 echo  [wait] Waiting for backend to load model (up to 60s)...
