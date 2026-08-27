@@ -155,3 +155,7 @@ Open **[http://localhost:5173](http://localhost:5173)** in your browser, click *
 ## 📜 License
 
 MIT License. Developed by Devansh Tyagi.
+
+---
+
+© 2025 Devansh Tyagi (Ares19v). All Rights Reserved.
