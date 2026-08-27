@@ -2,6 +2,9 @@
 
 # ⬡ Babel
 
+
+[![CI](https://github.com/Ares19v/Babel/actions/workflows/ci.yml/badge.svg)](https://github.com/Ares19v/Babel/actions/workflows/ci.yml)
+
 ### Real-Time Multilingual Speech-to-English Translation Workstation
 
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://python.org)
